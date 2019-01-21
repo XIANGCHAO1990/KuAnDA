@@ -1,11 +1,14 @@
 # KuAnDA
-抓取酷安数据进行分析
+抓取酷安数据进行分析<br>
 酷安是目前比较活跃的安卓应用市场，本次抓取的是网页端
 
-一、scrapy抓取数据：
-本次抓取采用了scrapy框架，其中kuspider文件夹就是所有的程序文件，
-1、从应用页面开始抓取，响应内容传到parse函数进行应用列表采集，然后采用循环的方式对所有页面进行采集：
+一、scrapy抓取数据：<br>
+本次抓取采用了scrapy框架，其中kuspider文件夹就是所有的程序文件，<br>
+1、从应用页面开始抓取，响应内容传到parse函数进行应用列表采集，然后采用循环的方式对所有页面进行采集：<br>
+
+```Python
 def start_requests(self):
+
         pages = []
         for page in range(1,570):
             url = 'https://www.coolapk.com/apk?p=%s' % page
@@ -13,16 +16,17 @@ def start_requests(self):
             pages.append(page)
         return pages
 
+
 def parse(self, response):
         contents = response.css('.app_left_list>a')
         for content in contents:
             url = content.css('::attr("href")').extract_first()
             url = response.urljoin(url)
             yield scrapy.Request(url,callback=self.parse_url,dont_filter=True)
-            
- 2、抓取关键字段，创建数据处理的item，数据入库：
- 
- class KuspiderItem(scrapy.Item):
+```            
+ 2、抓取关键字段，创建数据处理的item，数据入库：<br>
+ ```Python
+class KuspiderItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     name = scrapy.Field()
@@ -47,9 +51,10 @@ def parse(self, response):
         num_socore = response.css('.apk_rank_p1::text').extract_first().encode('utf-8')
         item['num_score'] = re.search('共(.*?)个评分',num_socore).group(1)
         yield item
+```
 
-
-其中get_comment和get_tags函数对特殊字段进行抓取转换：
+其中get_comment和get_tags函数对特殊字段进行抓取转换：<br>
+```Python
 def get_comment(self,response):
         message = response.css('.apk_topba_message::text').extract_first().encode('utf-8')
         result = re.findall(r'\s+(.*?)\s+/\s+(.*?)下载\s+/\s+(.*?)人关注\s+/\s+(.*?)个评论.*?',message)
@@ -61,8 +66,9 @@ def get_tags(self,response):
         data = response.css('.apk_left_span2')
         tags = [item.css('::text').extract_first() for item in data]
         return tags
+```
 
-3、将数据存入mongodb：
+3、将数据存入mongodb：<br>
 import pymongo
 
 class KuspiderPipeline(object):
@@ -89,10 +95,10 @@ class KuspiderPipeline(object):
     def close_spider(self,spider):
         self.client.close()
         
-二、利用pandas, matplotlib进行数据可视化呈现：
-kuandata.py为主要的数据清理分析代码，
-主要分析了下载量、评分、标签等字段，从区间分布和排名等角度分析，文件中的png图片是最终的可视化效果。
-
+二、利用pandas, matplotlib进行数据可视化呈现：<br>
+kuandata.py为主要的数据清理分析代码，<br>
+主要分析了下载量、评分、标签等字段，从区间分布和排名等角度分析，文件中的png图片是最终的可视化效果。<br>
+```Python
 def data_processing(df):
     str = '_ori'
     cols = ['comment', 'download', 'follow', 'num_score', 'volume']
@@ -139,6 +145,6 @@ def download_distribute(df):
     for x,y in zip(ax.get_xticks(),cats.values):
         plt.text(x,y+0.1,y,ha='center',fontsize=20)
     plt.savefig('/Users/Desktop/kuan/app下载量排名.png')
-
+```
 
 
