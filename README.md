@@ -69,6 +69,7 @@ def get_tags(self,response):
 ```
 
 3、将数据存入mongodb：<br>
+```Python
 import pymongo
 
 class KuspiderPipeline(object):
@@ -94,6 +95,7 @@ class KuspiderPipeline(object):
 
     def close_spider(self,spider):
         self.client.close()
+ ```
         
 二、利用pandas, matplotlib进行数据可视化呈现：<br>
 kuandata.py为主要的数据清理分析代码，<br>
